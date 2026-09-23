@@ -1,0 +1,1072 @@
+<!DOCTYPE html>
+<html lang="en" class="dark">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>OmniVerse Academy - Real-Time 3D Immersive Learning Platform</title>
+    <!-- Tailwind CSS CDN -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script>
+        tailwind.config = {
+            darkMode: 'class',
+            theme: {
+                extend: {
+                    colors: {
+                        brand: {
+                            50: '#eef2ff',
+                            500: '#6366f1',
+                            600: '#4f46e5',
+                            900: '#312e81',
+                            dark: '#0a0f1d'
+                        }
+                    },
+                    fontFamily: {
+                        sans: ['Inter', 'sans-serif'],
+                    }
+                }
+            }
+        }
+    </script>
+    <!-- Google Fonts Inter -->
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+    <!-- Font Awesome Icons -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <!-- Three.js for 3D Immersive Rooms -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
+    <!-- Canvas Confetti for rewards -->
+    <script src="https://cdn.jsdelivr.net/npm/canvas-confetti@1.5.1/dist/confetti.browser.min.js"></script>
+    <style>
+        body {
+            font-family: 'Inter', sans-serif;
+            background-color: #030712;
+            color: #f3f4f6;
+            overflow-x: hidden;
+        }
+        .glass-panel {
+            background: rgba(17, 24, 39, 0.7);
+            backdrop-filter: blur(16px);
+            -webkit-backdrop-filter: blur(16px);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+        }
+        .glass-card {
+            background: rgba(31, 41, 55, 0.5);
+            backdrop-filter: blur(12px);
+            -webkit-backdrop-filter: blur(12px);
+            border: 1px solid rgba(255, 255, 255, 0.08);
+            transition: all 0.3s ease;
+        }
+        .glass-card:hover {
+            border-color: rgba(99, 102, 241, 0.5);
+            box-shadow: 0 0 25px rgba(99, 102, 241, 0.2);
+            transform: translateY(-2px);
+        }
+        .neon-glow {
+            box-shadow: 0 0 30px rgba(99, 102, 241, 0.4);
+        }
+        .neon-text {
+            text-shadow: 0 0 15px rgba(99, 102, 241, 0.6);
+        }
+        /* Custom Scrollbar */
+        ::-webkit-scrollbar {
+            width: 8px;
+            height: 8px;
+        }
+        ::-webkit-scrollbar-track {
+            background: #030712;
+        }
+        ::-webkit-scrollbar-thumb {
+            background: #1f2937;
+            border-radius: 4px;
+        }
+        ::-webkit-scrollbar-thumb:hover {
+            background: #4f46e5;
+        }
+        @keyframes pulseGlow {
+            0%, 100% { opacity: 0.6; transform: scale(1); }
+            50% { opacity: 1; transform: scale(1.05); }
+        }
+        .animate-pulse-glow {
+            animation: pulseGlow 4s infinite ease-in-out;
+        }
+    </style>
+</head>
+<body class="min-h-screen flex flex-col selection:bg-indigo-500 selection:text-white">
+
+    <header class="glass-panel sticky top-0 z-50 px-4 lg:px-8 py-3 flex items-center justify-between border-b border-white/10">
+        <div class="flex items-center space-x-3 cursor-pointer" onclick="switchTab('dashboard')">
+            <div class="w-10 h-10 rounded-xl bg-gradient-to-tr from-indigo-600 to-purple-600 flex items-center justify-center neon-glow">
+                <i class="fa-solid fa-cube text-white text-lg"></i>
+            </div>
+            <div>
+                <h1 class="font-extrabold text-lg bg-gradient-to-r from-indigo-400 via-purple-300 to-pink-400 bg-clip-text text-transparent">OmniVerse Academy</h1>
+                <p class="text-xs text-slate-400">3D Immersive Learning (Ages 1-15)</p>
+            </div>
+        </div>
+
+        <!-- Navigation Tabs -->
+        <nav class="hidden md:flex items-center space-x-1 bg-slate-900/60 p-1.5 rounded-2xl border border-white/5">
+            <button onclick="switchTab('dashboard')" id="nav-dashboard" class="px-4 py-2 rounded-xl text-sm font-medium transition-all text-white bg-indigo-600 shadow-lg shadow-indigo-600/30">Dashboard</button>
+            <button onclick="switchTab('classroom')" id="nav-classroom" class="px-4 py-2 rounded-xl text-sm font-medium transition-all text-slate-400 hover:text-white hover:bg-white/5">Live 3D Classroom</button>
+            <button onclick="switchTab('catalog')" id="nav-catalog" class="px-4 py-2 rounded-xl text-sm font-medium transition-all text-slate-400 hover:text-white hover:bg-white/5">Courses & Catalog</button>
+            <button onclick="switchTab('schedule')" id="nav-schedule" class="px-4 py-2 rounded-xl text-sm font-medium transition-all text-slate-400 hover:text-white hover:bg-white/5">Schedule & Live</button>
+            <button onclick="switchTab('studio')" id="nav-studio" class="px-4 py-2 rounded-xl text-sm font-medium transition-all text-slate-400 hover:text-white hover:bg-white/5">Teacher Studio</button>
+            <button onclick="switchTab('aitutor')" id="nav-aitutor" class="px-4 py-2 rounded-xl text-sm font-medium transition-all text-slate-400 hover:text-white hover:bg-white/5">Quantum AI Tutor</button>
+        </nav>
+
+        <!-- User profile & XP badge -->
+        <div class="flex items-center space-x-4">
+            <div class="hidden sm:flex items-center space-x-2 bg-slate-800/80 px-3 py-1.5 rounded-full border border-indigo-500/30">
+                <i class="fa-solid fa-bolt text-yellow-400"></i>
+                <span class="text-xs font-bold text-slate-200"><span id="user-xp">1,450</span> XP</span>
+                <span class="text-xs text-indigo-400 font-semibold">(Level <span id="user-level">4</span>)</span>
+            </div>
+            <div class="relative group">
+                <button onclick="openProfileModal()" class="flex items-center space-x-2 p-1.5 rounded-xl bg-slate-800 border border-white/10 hover:border-indigo-500 transition-all">
+                    <img id="user-avatar-img" src="https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=100&h=100&fit=crop&crop=faces" alt="Avatar" class="w-8 h-8 rounded-lg object-cover">
+                    <span id="user-role-badge" class="text-xs font-semibold px-2 py-0.5 rounded bg-indigo-500/20 text-indigo-300 hidden sm:inline">Student</span>
+                    <i class="fa-solid fa-chevron-down text-xs text-slate-400 mr-1"></i>
+                </button>
+            </div>
+            <button onclick="toggleMobileMenu()" class="md:hidden p-2 rounded-xl bg-slate-800 text-slate-200">
+                <i class="fa-solid fa-bars text-lg"></i>
+            </button>
+        </div>
+    </header>
+
+    <div id="mobile-menu" class="hidden fixed inset-0 z-50 bg-black/80 backdrop-blur-md flex flex-col p-6 md:hidden">
+        <div class="flex justify-between items-center mb-8">
+            <h2 class="text-xl font-bold text-white">OmniVerse Menu</h2>
+            <button onclick="toggleMobileMenu()" class="p-2 text-slate-400 hover:text-white"><i class="fa-solid fa-xmark text-2xl"></i></button>
+        </div>
+        <div class="flex flex-col space-y-3">
+            <button onclick="switchTab('dashboard'); toggleMobileMenu();" class="text-left px-4 py-3 rounded-xl bg-slate-800 text-white font-medium">Dashboard</button>
+            <button onclick="switchTab('classroom'); toggleMobileMenu();" class="text-left px-4 py-3 rounded-xl bg-slate-800 text-white font-medium">Live 3D Classroom</button>
+            <button onclick="switchTab('catalog'); toggleMobileMenu();" class="text-left px-4 py-3 rounded-xl bg-slate-800 text-white font-medium">Courses & Catalog</button>
+            <button onclick="switchTab('schedule'); toggleMobileMenu();" class="text-left px-4 py-3 rounded-xl bg-slate-800 text-white font-medium">Schedule & Live</button>
+            <button onclick="switchTab('studio'); toggleMobileMenu();" class="text-left px-4 py-3 rounded-xl bg-slate-800 text-white font-medium">Teacher Studio</button>
+            <button onclick="switchTab('aitutor'); toggleMobileMenu();" class="text-left px-4 py-3 rounded-xl bg-slate-800 text-white font-medium">Quantum AI Tutor</button>
+        </div>
+    </div>
+
+    <!-- MAIN CONTENT CONTAINER -->
+    <main class="flex-1 max-w-7xl w-full mx-auto p-4 lg:p-6 pb-20">
+
+        <!-- ================= TAB 1: DASHBOARD ================= -->
+        <div id="tab-dashboard" class="space-y-6">
+            <!-- Hero Banner -->
+            <div class="relative rounded-3xl overflow-hidden glass-panel p-6 lg:p-10 border border-indigo-500/30 neon-glow">
+                <div class="absolute inset-0 bg-gradient-to-r from-indigo-900/40 via-purple-900/30 to-transparent pointer-events-none"></div>
+                <div class="relative z-10 max-w-2xl space-y-4">
+                    <div class="inline-flex items-center space-x-2 px-3 py-1 rounded-full bg-indigo-500/20 text-indigo-300 text-xs font-semibold border border-indigo-500/30">
+                        <i class="fa-solid fa-sparkles"></i><span>Next-Gen Immersive Education</span>
+                    </div>
+                    <h2 class="text-3xl lg:text-5xl font-extrabold tracking-tight text-white">Welcome back, <span id="welcome-name">Alex</span>! 🚀</h2>
+                    <p class="text-slate-300 text-sm lg:text-base">Explore interactive 3D virtual rooms, join live face-to-face classes with world-class teachers, and chat with your Quantum AI Tutor.</p>
+                    <div class="flex flex-wrap gap-3 pt-2">
+                        <button onclick="switchTab('classroom')" class="px-6 py-3 rounded-xl bg-indigo-600 hover:bg-indigo-500 text-white font-semibold shadow-lg shadow-indigo-600/40 flex items-center space-x-2 transition-all">
+                            <i class="fa-solid fa-vr-cardboard"></i><span>Enter 3D Classroom</span>
+                        </button>
+                        <button onclick="switchTab('catalog')" class="px-6 py-3 rounded-xl glass-card hover:bg-white/10 text-white font-semibold flex items-center space-x-2 transition-all">
+                            <i class="fa-solid fa-graduation-cap text-indigo-400"></i><span>Explore Courses</span>
+                        </button>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Quick Stats Row -->
+            <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+                <div class="glass-card p-5 rounded-2xl flex items-center space-x-4">
+                    <div class="w-12 h-12 rounded-xl bg-blue-500/20 text-blue-400 flex items-center justify-center text-xl"><i class="fa-solid fa-book-open"></i></div>
+                    <div>
+                        <p class="text-xs text-slate-400 font-medium">Enrolled Courses</p>
+                        <h3 class="text-2xl font-bold text-white">8 Subjects</h3>
+                    </div>
+                </div>
+                <div class="glass-card p-5 rounded-2xl flex items-center space-x-4">
+                    <div class="w-12 h-12 rounded-xl bg-purple-500/20 text-purple-400 flex items-center justify-center text-xl"><i class="fa-solid fa-medal"></i></div>
+                    <div>
+                        <p class="text-xs text-slate-400 font-medium">Quizzes Completed</p>
+                        <h3 class="text-2xl font-bold text-white">24 / 30</h3>
+                    </div>
+                </div>
+                <div class="glass-card p-5 rounded-2xl flex items-center space-x-4">
+                    <div class="w-12 h-12 rounded-xl bg-green-500/20 text-green-400 flex items-center justify-center text-xl"><i class="fa-solid fa-clock"></i></div>
+                    <div>
+                        <p class="text-xs text-slate-400 font-medium">Live Sessions Attended</p>
+                        <h3 class="text-2xl font-bold text-white">14 Hours</h3>
+                    </div>
+                </div>
+                <div class="glass-card p-5 rounded-2xl flex items-center space-x-4">
+                    <div class="w-12 h-12 rounded-xl bg-yellow-500/20 text-yellow-400 flex items-center justify-center text-xl"><i class="fa-solid fa-ranking-star"></i></div>
+                    <div>
+                        <p class="text-xs text-slate-400 font-medium">Global Rank</p>
+                        <h3 class="text-2xl font-bold text-white">Top 5%</h3>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Upcoming Live Classes & Quick 3D Rooms Grid -->
+            <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
+                <!-- Live Classes Panel -->
+                <div class="lg:col-span-2 glass-panel p-6 rounded-3xl space-y-4">
+                    <div class="flex justify-between items-center">
+                        <h3 class="text-lg font-bold text-white flex items-center space-x-2">
+                            <i class="fa-solid fa-video text-indigo-400"></i><span>Upcoming Live Virtual Classes</span>
+                        </h3>
+                        <button onclick="switchTab('schedule')" class="text-xs text-indigo-400 hover:text-indigo-300 font-semibold">View All Schedule</button>
+                    </div>
+                    <div id="dashboard-live-list" class="space-y-3">
+                        <!-- Populated by JS -->
+                    </div>
+                </div>
+
+                <!-- 3D Room Quick Launch -->
+                <div class="glass-panel p-6 rounded-3xl space-y-4">
+                    <h3 class="text-lg font-bold text-white flex items-center space-x-2">
+                        <i class="fa-solid fa-cube text-purple-400"></i><span>Immersive 3D Labs</span>
+                    </h3>
+                    <div class="space-y-3">
+                        <div onclick="switchTab('classroom'); load3DRoom('biosphere')" class="glass-card p-4 rounded-2xl cursor-pointer hover:bg-white/5 flex items-center justify-between">
+                            <div class="flex items-center space-x-3">
+                                <div class="w-10 h-10 rounded-lg bg-emerald-500/20 text-emerald-400 flex items-center justify-center"><i class="fa-solid fa-seedling"></i></div>
+                                <div>
+                                    <h4 class="font-bold text-sm text-white">Biosphere 3D</h4>
+                                    <p class="text-xs text-slate-400">Ecosystems & Botany</p>
+                                </div>
+                            </div>
+                            <i class="fa-solid fa-chevron-right text-slate-500 text-xs"></i>
+                        </div>
+                        <div onclick="switchTab('classroom'); load3DRoom('quantum')" class="glass-card p-4 rounded-2xl cursor-pointer hover:bg-white/5 flex items-center justify-between">
+                            <div class="flex items-center space-x-3">
+                                <div class="w-10 h-10 rounded-lg bg-indigo-500/20 text-indigo-400 flex items-center justify-center"><i class="fa-solid fa-atom"></i></div>
+                                <div>
+                                    <h4 class="font-bold text-sm text-white">Quantum Lab</h4>
+                                    <p class="text-xs text-slate-400">Physics & Atoms</p>
+                                </div>
+                            </div>
+                            <i class="fa-solid fa-chevron-right text-slate-500 text-xs"></i>
+                        </div>
+                        <div onclick="switchTab('classroom'); load3DRoom('chrono')" class="glass-card p-4 rounded-2xl cursor-pointer hover:bg-white/5 flex items-center justify-between">
+                            <div class="flex items-center space-x-3">
+                                <div class="w-10 h-10 rounded-lg bg-amber-500/20 text-amber-400 flex items-center justify-center"><i class="fa-solid fa-hourglass-start"></i></div>
+                                <div>
+                                    <h4 class="font-bold text-sm text-white">Chrono-Chamber</h4>
+                                    <p class="text-xs text-slate-400">History & Artifacts</p>
+                                </div>
+                            </div>
+                            <i class="fa-solid fa-chevron-right text-slate-500 text-xs"></i>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- ================= TAB 2: LIVE 3D CLASSROOM ================= -->
+        <div id="tab-classroom" class="hidden space-y-4">
+            <div class="flex flex-wrap items-center justify-between gap-4 glass-panel p-4 rounded-2xl">
+                <div class="flex items-center space-x-3">
+                    <span class="w-3 h-3 rounded-full bg-red-500 animate-ping"></span>
+                    <h2 class="text-lg font-bold text-white">Live Virtual Classroom: <span id="current-room-title" class="text-indigo-400">Quantum Lab</span></h2>
+                </div>
+                <!-- Room Switcher -->
+                <div class="flex flex-wrap gap-2">
+                    <button onclick="load3DRoom('quantum')" class="px-3 py-1.5 rounded-xl bg-indigo-600 text-xs font-semibold text-white">Quantum Lab</button>
+                    <button onclick="load3DRoom('biosphere')" class="px-3 py-1.5 rounded-xl bg-slate-800 text-xs font-semibold text-slate-300 hover:bg-slate-700">Biosphere</button>
+                    <button onclick="load3DRoom('chrono')" class="px-3 py-1.5 rounded-xl bg-slate-800 text-xs font-semibold text-slate-300 hover:bg-slate-700">Chrono-Chamber</button>
+                    <button onclick="load3DRoom('newton')" class="px-3 py-1.5 rounded-xl bg-slate-800 text-xs font-semibold text-slate-300 hover:bg-slate-700">Newton Sandbox</button>
+                </div>
+            </div>
+
+            <!-- Main Interactive Arena (3D Canvas + Video Call Sidebar) -->
+            <div class="grid grid-cols-1 lg:grid-cols-4 gap-4">
+                <!-- 3D Canvas Viewport (3 cols) -->
+                <div class="lg:col-span-3 glass-panel rounded-3xl overflow-hidden relative flex flex-col h-[550px]">
+                    <div id="canvas-container" class="w-full h-full flex-1 relative cursor-grab active:cursor-grabbing">
+                        <!-- Three.js renders here -->
+                    </div>
+                    <!-- 3D Controls Overlay -->
+                    <div class="absolute bottom-4 left-4 right-4 flex items-center justify-between bg-slate-900/80 backdrop-blur-md p-3 rounded-2xl border border-white/10">
+                        <div class="flex items-center space-x-3">
+                            <button onclick="rotateModelSpeed()" class="px-3 py-1.5 rounded-xl bg-indigo-600/80 hover:bg-indigo-500 text-white text-xs font-medium flex items-center space-x-1.5">
+                                <i class="fa-solid fa-rotate"></i><span>Toggle Spin</span>
+                            </button>
+                            <button onclick="toggleWireframe()" class="px-3 py-1.5 rounded-xl bg-slate-800 hover:bg-slate-700 text-slate-200 text-xs font-medium flex items-center space-x-1.5">
+                                <i class="fa-solid fa-shapes"></i><span>Wireframe</span>
+                            </button>
+                        </div>
+                        <div class="text-xs text-slate-300 hidden sm:block">
+                            <i class="fa-solid fa-hand-pointer text-indigo-400 mr-1"></i> Drag to rotate 3D object • Scroll to zoom
+                        </div>
+                        <button onclick="toggleFullscreen()" class="p-2 rounded-xl bg-slate-800 hover:bg-slate-700 text-slate-200 text-xs">
+                            <i class="fa-solid fa-expand"></i>
+                        </button>
+                    </div>
+                </div>
+
+                <!-- Video Call & Voice Panel (1 col) -->
+                <div class="glass-panel p-4 rounded-3xl flex flex-col space-y-4 h-[550px]">
+                    <div class="flex justify-between items-center border-b border-white/10 pb-3">
+                        <h3 class="font-bold text-sm text-white flex items-center space-x-2">
+                            <i class="fa-solid fa-users text-indigo-400"></i><span>Live Face-to-Face Grid</span>
+                        </h3>
+                        <span class="text-xs px-2 py-0.5 rounded bg-green-500/20 text-green-400 font-semibold">4 Online</span>
+                    </div>
+
+                    <!-- Video Grid Participants -->
+                    <div class="flex-1 overflow-y-auto space-y-3 pr-1">
+                        <!-- Teacher Stream -->
+                        <div class="relative rounded-2xl overflow-hidden bg-slate-900 border border-indigo-500/40 aspect-video flex items-center justify-center">
+                            <video id="teacher-video-feed" autoplay muted playsinline class="w-full h-full object-cover hidden"></video>
+                            <div id="teacher-video-placeholder" class="absolute inset-0 flex flex-col items-center justify-center bg-gradient-to-tr from-indigo-950 to-slate-900">
+                                <img src="https://images.unsplash.com/photo-1544005313-94ddf0286df2?w=120&h=120&fit=crop&crop=faces" class="w-14 h-14 rounded-full border-2 border-indigo-500 mb-2 object-cover">
+                                <p class="text-xs font-bold text-white">Dr. Eleanor Vance</p>
+                                <p class="text-[10px] text-indigo-300">Lead Professor (Host)</p>
+                            </div>
+                            <div class="absolute top-2 left-2 px-2 py-0.5 rounded bg-black/60 text-[10px] text-white font-medium flex items-center space-x-1">
+                                <i class="fa-solid fa-microphone text-green-400 text-[8px]"></i><span>Prof. Vance</span>
+                            </div>
+                        </div>
+
+                        <!-- Student / User Stream -->
+                        <div class="relative rounded-2xl overflow-hidden bg-slate-900 border border-white/10 aspect-video flex items-center justify-center">
+                            <video id="user-video-feed" autoplay muted playsinline class="w-full h-full object-cover hidden"></video>
+                            <div id="user-video-placeholder" class="absolute inset-0 flex flex-col items-center justify-center bg-slate-950">
+                                <img id="participant-avatar" src="https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=120&h=120&fit=crop&crop=faces" class="w-12 h-12 rounded-full border border-slate-600 mb-1 object-cover">
+                                <p class="text-xs font-medium text-slate-300" id="participant-name">You (Alex)</p>
+                            </div>
+                            <div class="absolute top-2 left-2 px-2 py-0.5 rounded bg-black/60 text-[10px] text-white font-medium flex items-center space-x-1">
+                                <i id="user-mic-icon" class="fa-solid fa-microphone text-green-400 text-[8px]"></i><span>You</span>
+                            </div>
+                        </div>
+
+                        <!-- Classmate Peer -->
+                        <div class="relative rounded-2xl overflow-hidden bg-slate-900 border border-white/10 aspect-video flex items-center justify-center">
+                            <div class="absolute inset-0 flex flex-col items-center justify-center bg-slate-950">
+                                <img src="https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=120&h=120&fit=crop&crop=faces" class="w-12 h-12 rounded-full border border-slate-600 mb-1 object-cover">
+                                <p class="text-xs font-medium text-slate-300">Liam (Student)</p>
+                            </div>
+                            <div class="absolute top-2 left-2 px-2 py-0.5 rounded bg-black/60 text-[10px] text-white font-medium">Liam</div>
+                        </div>
+                    </div>
+
+                    <!-- Call Action Buttons -->
+                    <div class="grid grid-cols-4 gap-2 pt-2 border-t border-white/10">
+                        <button onclick="toggleAudioCall()" id="btn-audio" class="p-3 rounded-xl bg-slate-800 hover:bg-slate-700 text-white flex items-center justify-center transition-all" title="Mute/Unmute Mic">
+                            <i class="fa-solid fa-microphone text-sm text-green-400"></i>
+                        </button>
+                        <button onclick="toggleVideoCall()" id="btn-video" class="p-3 rounded-xl bg-slate-800 hover:bg-slate-700 text-white flex items-center justify-center transition-all" title="Turn Camera On/Off">
+                            <i class="fa-solid fa-video text-sm text-red-400"></i>
+                        </button>
+                        <button onclick="toggleScreenShare()" id="btn-screen" class="p-3 rounded-xl bg-slate-800 hover:bg-slate-700 text-white flex items-center justify-center transition-all" title="Share Screen">
+                            <i class="fa-solid fa-desktop text-sm text-slate-300"></i>
+                        </button>
+                        <button onclick="openRaiseHandModal()" class="p-3 rounded-xl bg-indigo-600 hover:bg-indigo-500 text-white flex items-center justify-center transition-all" title="Raise Hand">
+                            <i class="fa-solid fa-hand text-sm"></i>
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- ================= TAB 3: COURSE CATALOG ================= -->
+        <div id="tab-catalog" class="hidden space-y-6">
+            <div class="flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
+                <div>
+                    <h2 class="text-2xl font-extrabold text-white">Comprehensive Course Catalog</h2>
+                    <p class="text-sm text-slate-400">Curated by age group from foundational ABC to advanced Quantum Physics</p>
+                </div>
+                <!-- Age Group Filter Buttons -->
+                <div class="flex flex-wrap gap-2 bg-slate-900/80 p-1.5 rounded-2xl border border-white/10">
+                    <button onclick="filterCourses('all')" id="filter-btn-all" class="px-4 py-2 rounded-xl text-xs font-bold transition-all bg-indigo-600 text-white">All Ages</button>
+                    <button onclick="filterCourses('1-3')" id="filter-btn-1-3" class="px-4 py-2 rounded-xl text-xs font-semibold transition-all text-slate-400 hover:text-white">Ages 1–3 (Toddler)</button>
+                    <button onclick="filterCourses('4-7')" id="filter-btn-4-7" class="px-4 py-2 rounded-xl text-xs font-semibold transition-all text-slate-400 hover:text-white">Ages 4–7 (Early)</button>
+                    <button onclick="filterCourses('8-11')" id="filter-btn-8-11" class="px-4 py-2 rounded-xl text-xs font-semibold transition-all text-slate-400 hover:text-white">Ages 8–11 (Junior)</button>
+                    <button onclick="filterCourses('12-15')" id="filter-btn-12-15" class="px-4 py-2 rounded-xl text-xs font-semibold transition-all text-slate-400 hover:text-white">Ages 12–15 (Teen)</button>
+                </div>
+            </div>
+
+            <!-- Course Cards Grid -->
+            <div id="course-grid" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+                <!-- Populated dynamically by JS -->
+            </div>
+        </div>
+
+        <!-- ================= TAB 4: SCHEDULE & LIVE ================= -->
+        <div id="tab-schedule" class="hidden space-y-6">
+            <div class="flex justify-between items-center">
+                <div>
+                    <h2 class="text-2xl font-extrabold text-white">Live Classes & Weekly Timetable</h2>
+                    <p class="text-sm text-slate-400">Join scheduled interactive face-to-face virtual sessions with expert educators.</p>
+                </div>
+                <button onclick="openAddScheduleModal()" class="px-4 py-2.5 rounded-xl bg-indigo-600 hover:bg-indigo-500 text-white font-semibold text-sm flex items-center space-x-2 shadow-lg shadow-indigo-600/30">
+                    <i class="fa-solid fa-plus"></i><span>Schedule Class</span>
+                </button>
+            </div>
+
+            <div class="glass-panel p-6 rounded-3xl space-y-4">
+                <h3 class="text-lg font-bold text-white">Upcoming Sessions This Week</h3>
+                <div id="full-schedule-list" class="space-y-3">
+                    <!-- Populated dynamically -->
+                </div>
+            </div>
+        </div>
+
+        <!-- ================= TAB 5: TEACHER STUDIO ================= -->
+        <div id="tab-studio" class="hidden space-y-6">
+            <div class="glass-panel p-6 lg:p-8 rounded-3xl border border-indigo-500/30 space-y-6">
+                <div class="flex items-center space-x-3">
+                    <div class="w-12 h-12 rounded-2xl bg-indigo-600/20 text-indigo-400 flex items-center justify-center text-2xl"><i class="fa-solid fa-chalkboard-user"></i></div>
+                    <div>
+                        <h2 class="text-2xl font-extrabold text-white">Teacher Lesson & Course Creator Studio</h2>
+                        <p class="text-sm text-slate-400">Upload materials, configure 3D interactive models, schedule live classes, and broadcast instantly.</p>
+                    </div>
+                </div>
+
+                <form id="teacher-form" onsubmit="handleTeacherPublish(event)" class="grid grid-cols-1 md:grid-cols-2 gap-6 pt-4">
+                    <div class="space-y-4">
+                        <div>
+                            <label class="block text-xs font-semibold text-slate-300 uppercase tracking-wider mb-2">Course / Lesson Title</label>
+                            <input type="text" id="t-title" required placeholder="e.g., Quantum Mechanics for Young Geniuses" class="w-full bg-slate-900 border border-white/10 rounded-xl px-4 py-3 text-white text-sm focus:outline-none focus:border-indigo-500">
+                        </div>
+                        <div>
+                            <label class="block text-xs font-semibold text-slate-300 uppercase tracking-wider mb-2">Category & Subject</label>
+                            <select id="t-subject" class="w-full bg-slate-900 border border-white/10 rounded-xl px-4 py-3 text-white text-sm focus:outline-none focus:border-indigo-500">
+                                <option value="Science">Science & Quantum Lab</option>
+                                <option value="Math">Math & Arithmetic</option>
+                                <option value="Literature">Literature & Reading</option>
+                                <option value="History">History & Chrono-Chamber</option>
+                                <option value="ABC">ABC & Spelling (Ages 1-3)</option>
+                                <option value="SocialStudies">Social Studies & General Studies</option>
+                            </select>
+                        </div>
+                        <div>
+                            <label class="block text-xs font-semibold text-slate-300 uppercase tracking-wider mb-2">Target Age Group</label>
+                            <select id="t-age" class="w-full bg-slate-900 border border-white/10 rounded-xl px-4 py-3 text-white text-sm focus:outline-none focus:border-indigo-500">
+                                <option value="1-3">Ages 1-3 (Toddler)</option>
+                                <option value="4-7">Ages 4-7 (Early Learners)</option>
+                                <option value="8-11">Ages 8-11 (Junior Scholars)</option>
+                                <option value="12-15" selected>Ages 12-15 (Teens)</option>
+                            </select>
+                        </div>
+                    </div>
+
+                    <div class="space-y-4 flex flex-col justify-between">
+                        <div>
+                            <label class="block text-xs font-semibold text-slate-300 uppercase tracking-wider mb-2">Upload Materials (PDF, PPT, 3D Assets)</label>
+                            <div class="border-2 border-dashed border-white/10 rounded-2xl p-6 text-center hover:border-indigo-500 transition-all bg-slate-900/50 cursor-pointer">
+                                <i class="fa-solid fa-cloud-arrow-up text-3xl text-indigo-400 mb-2"></i>
+                                <p class="text-xs text-slate-300 font-medium">Drag & drop course files here, or <span class="text-indigo-400">browse</span></p>
+                                <p class="text-[10px] text-slate-500 mt-1">Supports PDF, GLTF/GLB 3D models, MP4, PNG</p>
+                            </div>
+                        </div>
+                        <button type="submit" class="w-full py-3.5 rounded-xl bg-gradient-to-r from-indigo-600 to-purple-600 hover:from-indigo-500 hover:to-purple-500 text-white font-bold text-sm shadow-lg shadow-indigo-600/40 transition-all flex items-center justify-center space-x-2">
+                            <i class="fa-solid fa-rocket"></i><span>Publish & Launch Live Session</span>
+                        </button>
+                    </div>
+                </form>
+            </div>
+        </div>
+
+        <!-- ================= TAB 6: QUANTUM AI TUTOR ================= -->
+        <div id="tab-aitutor" class="hidden space-y-4">
+            <div class="glass-panel rounded-3xl overflow-hidden flex flex-col h-[650px] border border-indigo-500/30">
+                <!-- AI Header -->
+                <div class="bg-slate-900/90 px-6 py-4 border-b border-white/10 flex items-center justify-between">
+                    <div class="flex items-center space-x-3">
+                        <div class="w-10 h-10 rounded-xl bg-gradient-to-tr from-cyan-500 to-indigo-600 flex items-center justify-center neon-glow">
+                            <i class="fa-solid fa-wand-magic-sparkles text-white"></i>
+                        </div>
+                        <div>
+                            <h3 class="font-bold text-white text-base">Quantum AI Tutor (Gemini-Powered)</h3>
+                            <p class="text-xs text-indigo-300">Ask any question on Math, Science, History, ABC, or beyond!</p>
+                        </div>
+                    </div>
+                    <div class="flex items-center space-x-2">
+                        <span class="w-2.5 h-2.5 rounded-full bg-green-500 animate-pulse"></span>
+                        <span class="text-xs text-slate-300 font-medium">AI Online</span>
+                    </div>
+                </div>
+
+                <!-- Chat Messages Area -->
+                <div id="ai-chat-messages" class="flex-1 overflow-y-auto p-6 space-y-4 bg-slate-950/50">
+                    <div class="flex items-start space-x-3">
+                        <div class="w-8 h-8 rounded-full bg-indigo-600 flex items-center justify-center text-white text-xs font-bold shrink-0">AI</div>
+                        <div class="glass-card p-4 rounded-2xl max-w-xl text-sm text-slate-200">
+                            Greetings, scholar! I am your Quantum AI Tutor. Whether you need help solving a math equation, understanding photosynthesis, learning ABC phonics, or exploring world history, I am here to assist you in real time. What shall we learn today?
+                        </div>
+                    </div>
+                </div>
+
+                <!-- AI Input Bar -->
+                <div class="p-4 bg-slate-900/90 border-t border-white/10 flex items-center space-x-3">
+                    <button onclick="sendAiVoicePrompt()" class="p-3 rounded-xl bg-slate-800 hover:bg-slate-700 text-indigo-400 transition-all" title="Voice Input">
+                        <i class="fa-solid fa-microphone text-lg"></i>
+                    </button>
+                    <input type="text" id="ai-chat-input" onkeydown="if(event.key==='Enter') sendAiMessage()" placeholder="Ask your Quantum Tutor anything..." class="flex-1 bg-slate-950 border border-white/10 rounded-xl px-4 py-3 text-white text-sm focus:outline-none focus:border-indigo-500">
+                    <button onclick="sendAiMessage()" class="px-6 py-3 rounded-xl bg-indigo-600 hover:bg-indigo-500 text-white font-semibold text-sm transition-all flex items-center space-x-2 shadow-lg shadow-indigo-600/30">
+                        <span>Ask AI</span><i class="fa-solid fa-paper-plane"></i>
+                    </button>
+                </div>
+            </div>
+        </div>
+
+    </main>
+
+    <!-- ================= MODALS ================= -->
+    <!-- Quiz Modal -->
+    <div id="quiz-modal" class="hidden fixed inset-0 z-50 bg-black/80 backdrop-blur-md flex items-center justify-center p-4">
+        <div class="glass-panel max-w-lg w-full p-6 lg:p-8 rounded-3xl border border-indigo-500/40 space-y-6 relative">
+            <button onclick="closeQuizModal()" class="absolute top-4 right-4 text-slate-400 hover:text-white"><i class="fa-solid fa-xmark text-xl"></i></button>
+            <div id="quiz-content" class="space-y-4">
+                <!-- Populated dynamically -->
+            </div>
+        </div>
+    </div>
+
+    <!-- Footer -->
+    <footer class="glass-panel py-4 px-6 text-center text-xs text-slate-500 border-t border-white/10">
+        &copy; 2026 OmniVerse Academy Inc. Real-Time 3D Immersive Education for Ages 1-15. All rights reserved.
+    </footer>
+
+    <!-- ================= JAVASCRIPT LOGIC ================= -->
+    <script>
+        let currentTab = 'dashboard';
+        let userXP = 1450;
+        let userLevel = 4;
+        let currentRoom = 'quantum';
+        let isAudioOn = true;
+        let isVideoOn = false;
+        let isScreenSharing = false;
+        let scene, camera, renderer, currentMesh, animationId, isRotating = true, isWireframe = false;
+
+        // Course Catalog Data covering Ages 1-15 and all required subjects
+        const courses = [
+            { id: 1, title: 'ABC Phonics & Letter Adventure', subject: 'ABC', age: '1-3', icon: 'fa-child-reaching', color: 'from-pink-500 to-rose-500', desc: 'Interactive audio-visual alphabet exploration for toddlers.', progress: 100 },
+            { id: 2, title: 'Magical Spelling & Wordcraft', subject: 'Spelling', age: '4-7', icon: 'fa-wand-magic', color: 'from-purple-500 to-indigo-500', desc: 'Build first words and master spelling with fun mini-games.', progress: 75 },
+            { id: 3, title: 'Fun Arithmetic & Counting 123', subject: 'Math', age: '1-3', icon: 'fa-calculator', color: 'from-blue-500 to-cyan-500', desc: 'Playful numbers, shapes, and counting for young minds.', progress: 90 },
+            { id: 4, title: 'Quantum Physics for Kids', subject: 'Science', age: '8-11', icon: 'fa-atom', color: 'from-cyan-500 to-blue-600', desc: 'Explore atoms, quarks, and the laws of motion in 3D.', progress: 60 },
+            { id: 5, title: 'Epic Literature & Fairy Tales', subject: 'Literature', age: '4-7', icon: 'fa-book-bookmark', color: 'from-amber-500 to-orange-500', desc: 'Immersive storytelling with animated characters and read-alongs.', progress: 85 },
+            { id: 6, title: 'World History & Chrono-Chamber', subject: 'History', age: '12-15', icon: 'fa-landmark', color: 'from-emerald-500 to-teal-600', desc: 'Travel back in time to ancient civilizations in 3D virtual reality.', progress: 40 },
+            { id: 7, title: 'Advanced Algebra & Geometry', subject: 'Math', age: '12-15', icon: 'fa-square-root-variable', color: 'from-indigo-600 to-purple-700', desc: 'Master quadratic equations, trigonometry, and spatial geometry.', progress: 50 },
+            { id: 8, title: 'General & Social Studies', subject: 'SocialStudies', age: '8-11', icon: 'fa-globe', color: 'from-teal-500 to-emerald-600', desc: 'Discover world cultures, geography, civics, and environment.', progress: 70 },
+            { id: 9, title: 'Creative Writing & Composition', subject: 'Writing', age: '8-11', icon: 'fa-feather', color: 'from-rose-500 to-pink-600', desc: 'Craft compelling essays, poems, and short stories with AI guidance.', progress: 65 }
+        ];
+
+        // Live Virtual Classes Data
+        const liveClasses = [
+            { id: 1, title: 'Live Quantum Lab: Inside the Atom', teacher: 'Dr. Eleanor Vance', time: 'Today, 2:00 PM EST', age: '8-11', subject: 'Science', attendees: 24, status: 'Starting Soon' },
+            { id: 2, title: 'ABC & Toddler Storytime', teacher: 'Prof. Sarah Jenkins', time: 'Today, 3:30 PM EST', age: '1-3', subject: 'ABC', attendees: 18, status: 'Upcoming' },
+            { id: 3, title: 'Ancient Rome in 3D Chrono-Chamber', teacher: 'Prof. Marcus Aurelius', time: 'Tomorrow, 10:00 AM EST', age: '12-15', subject: 'History', attendees: 32, status: 'Scheduled' },
+            { id: 4, title: 'Interactive Math Magic & Fractions', teacher: 'Dr. Alan Turing Jr.', time: 'Tomorrow, 1:00 PM EST', age: '4-7', subject: 'Math', attendees: 27, status: 'Scheduled' }
+        ];
+
+        window.onload = function() {
+            renderCourses('all');
+            renderLiveClasses();
+            initThreeJS('quantum');
+            
+            window.addEventListener('resize', () => {
+                if(renderer && camera) {
+                    const container = document.getElementById('canvas-container');
+                    camera.aspect = container.clientWidth / container.clientHeight;
+                    camera.updateProjectionMatrix();
+                    renderer.setSize(container.clientWidth, container.clientHeight);
+                }
+            });
+        };
+
+        // Tab Switching Logic
+        function switchTab(tabId) {
+            currentTab = tabId;
+            const tabs = ['dashboard', 'classroom', 'catalog', 'schedule', 'studio', 'aitutor'];
+            tabs.forEach(t => {
+                const el = document.getElementById(`tab-${t}`);
+                const navBtn = document.getElementById(`nav-${t}`);
+                if(el) {
+                    if(t === tabId) {
+                        el.classList.remove('hidden');
+                        if(navBtn) {
+                            navBtn.className = "px-4 py-2 rounded-xl text-sm font-medium transition-all text-white bg-indigo-600 shadow-lg shadow-indigo-600/30";
+                        }
+                        if(t === 'classroom') {
+                            setTimeout(() => {
+                                if(renderer) renderer.setSize(document.getElementById('canvas-container').clientWidth, document.getElementById('canvas-container').clientHeight);
+                            }, 50);
+                        }
+                    } else {
+                        el.classList.add('hidden');
+                        if(navBtn) {
+                            navBtn.className = "px-4 py-2 rounded-xl text-sm font-medium transition-all text-slate-400 hover:text-white hover:bg-white/5";
+                        }
+                    }
+                }
+            });
+            window.scrollTo({ top: 0, behavior: 'smooth' });
+        }
+
+        function toggleMobileMenu() {
+            const menu = document.getElementById('mobile-menu');
+            menu.classList.toggle('hidden');
+        }
+
+        function renderCourses(ageFilter) {
+            // Update active state of filter buttons
+            ['all', '1-3', '4-7', '8-11', '12-15'].forEach(age => {
+                const btn = document.getElementById(`filter-btn-${age}`);
+                if(btn) {
+                    if(age === ageFilter) {
+                        btn.className = "px-4 py-2 rounded-xl text-xs font-bold transition-all bg-indigo-600 text-white";
+                    } else {
+                        btn.className = "px-4 py-2 rounded-xl text-xs font-semibold transition-all text-slate-400 hover:text-white";
+                    }
+                }
+            });
+
+            const grid = document.getElementById('course-grid');
+            const filtered = ageFilter === 'all' ? courses : courses.filter(c => c.age === ageFilter);
+
+            grid.innerHTML = filtered.map(c => `
+                <div class="glass-card p-6 rounded-3xl flex flex-col justify-between space-y-4">
+                    <div class="space-y-3">
+                        <div class="flex items-center justify-between">
+                            <div class="w-12 h-12 rounded-2xl bg-gradient-to-tr ${c.color} flex items-center justify-center text-white text-lg shadow-lg">
+                                <i class="fa-solid ${c.icon}"></i>
+                            </div>
+                            <span class="text-xs px-2.5 py-1 rounded-full bg-white/10 text-indigo-300 font-semibold">Ages ${c.age}</span>
+                        </div>
+                        <h3 class="font-bold text-lg text-white">${c.title}</h3>
+                        <p class="text-xs text-slate-400">${c.desc}</p>
+                    </div>
+                    <div class="space-y-3 pt-2">
+                        <div class="flex justify-between text-xs text-slate-400 font-medium">
+                            <span>Progress</span>
+                            <span class="text-indigo-400">${c.progress}%</span>
+                        </div>
+                        <div class="w-full bg-slate-800 h-2 rounded-full overflow-hidden">
+                            <div class="bg-gradient-to-r from-indigo-500 to-purple-500 h-full rounded-full" style="width: ${c.progress}%"></div>
+                        </div>
+                        <div class="flex items-center space-x-2 pt-2">
+                            <button onclick="switchTab('classroom'); load3DRoom('quantum')" class="flex-1 py-2.5 rounded-xl bg-indigo-600/80 hover:bg-indigo-500 text-white text-xs font-semibold transition-all flex items-center justify-center space-x-1.5">
+                                <i class="fa-solid fa-play text-[10px]"></i><span>Start Learning</span>
+                            </button>
+                            <button onclick="openQuiz(${c.id})" class="px-3.5 py-2.5 rounded-xl bg-slate-800 hover:bg-slate-700 text-indigo-400 text-xs font-semibold transition-all" title="Take Quiz">
+                                <i class="fa-solid fa-clipboard-question"></i>
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            `).join('');
+        }
+
+        function filterCourses(age) {
+            renderCourses(age);
+        }
+
+        function renderLiveClasses() {
+            const list1 = document.getElementById('dashboard-live-list');
+            const list2 = document.getElementById('full-schedule-list');
+
+            const htmlContent = liveClasses.map(l => `
+                <div class="glass-card p-4 rounded-2xl flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
+                    <div class="flex items-start space-x-3">
+                        <div class="w-10 h-10 rounded-xl bg-indigo-600/20 text-indigo-400 flex items-center justify-center shrink-0 mt-0.5"><i class="fa-solid fa-video"></i></div>
+                        <div>
+                            <div class="flex items-center space-x-2">
+                                <h4 class="font-bold text-sm text-white">${l.title}</h4>
+                                <span class="text-[10px] px-2 py-0.5 rounded bg-indigo-500/20 text-indigo-300 font-semibold">Ages ${l.age}</span>
+                            </div>
+                            <p class="text-xs text-slate-400 mt-0.5">Instructor: <span class="text-slate-300 font-medium">${l.teacher}</span> • ${l.time}</p>
+                        </div>
+                    </div>
+                    <div class="flex items-center space-x-3 w-full sm:w-auto justify-end">
+                        <span class="text-xs text-slate-400 hidden lg:inline"><i class="fa-solid fa-user-group mr-1"></i>${l.attendees} attending</span>
+                        <button onclick="switchTab('classroom')" class="px-4 py-2 rounded-xl bg-indigo-600 hover:bg-indigo-500 text-white text-xs font-semibold transition-all shadow-md shadow-indigo-600/30 flex items-center space-x-1.5">
+                            <i class="fa-solid fa-right-to-bracket"></i><span>Join Live</span>
+                        </button>
+                    </div>
+                </div>
+            `).join('');
+
+            if(list1) list1.innerHTML = htmlContent;
+            if(list2) list2.innerHTML = htmlContent;
+        }
+
+        function initThreeJS(roomType) {
+            currentRoom = roomType;
+            const container = document.getElementById('canvas-container');
+            if(!container) return;
+            container.innerHTML = '';
+
+            scene = new THREE.Scene();
+            camera = new THREE.PerspectiveCamera(60, container.clientWidth / container.clientHeight, 0.1, 1000);
+            camera.position.z = 5;
+
+            renderer = new THREE.WebGLRenderer({ antialias: true, alpha: true });
+            renderer.setSize(container.clientWidth, container.clientHeight);
+            renderer.setPixelRatio(window.devicePixelRatio);
+            container.appendChild(renderer.domElement);
+
+            // Lighting
+            const ambientLight = new THREE.AmbientLight(0xffffff, 0.8);
+            scene.add(ambientLight);
+
+            const pointLight = new THREE.PointLight(0x6366f1, 2, 50);
+            pointLight.position.set(5, 5, 5);
+            scene.add(pointLight);
+
+            // Create 3D Object based on room type
+            let geometry, material;
+            if (roomType === 'quantum') {
+                document.getElementById('current-room-title').innerText = 'Quantum Lab (Atomic Structure)';
+                geometry = new THREE.IcosahedronGeometry(1.5, 1);
+                material = new THREE.MeshStandardMaterial({ color: 0x6366f1, wireframe: isWireframe, roughness: 0.2, metalness: 0.8 });
+            } else if (roomType === 'biosphere') {
+                document.getElementById('current-room-title').innerText = 'Biosphere 3D (Botanical Ecosystem)';
+                geometry = new THREE.DodecahedronGeometry(1.6, 0);
+                material = new THREE.MeshStandardMaterial({ color: 0x10b981, wireframe: isWireframe, roughness: 0.4 });
+            } else if (roomType === 'chrono') {
+                document.getElementById('current-room-title').innerText = 'Chrono-Chamber (Ancient Artifacts)';
+                geometry = new THREE.TorusKnotGeometry(1, 0.3, 100, 16);
+                material = new THREE.MeshStandardMaterial({ color: 0xf59e0b, wireframe: isWireframe, roughness: 0.3, metalness: 0.9 });
+            } else {
+                document.getElementById('current-room-title').innerText = 'Newton Sandbox (Physics Mechanics)';
+                geometry = new THREE.BoxGeometry(1.8, 1.8, 1.8);
+                material = new THREE.MeshStandardMaterial({ color: 0xec4899, wireframe: isWireframe, roughness: 0.5 });
+            }
+
+            currentMesh = new THREE.Mesh(geometry, material);
+            scene.add(currentMesh);
+
+            // Mouse rotation interaction
+            let isDragging = false;
+            let prevMouseX = 0, prevMouseY = 0;
+
+            container.addEventListener('mousedown', (e) => { isDragging = true; prevMouseX = e.clientX; prevMouseY = e.clientY; });
+            window.addEventListener('mouseup', () => { isDragging = false; });
+            container.addEventListener('mousemove', (e) => {
+                if(!isDragging || !currentMesh) return;
+                const deltaX = e.clientX - prevMouseX;
+                const deltaY = e.clientY - prevMouseY;
+                currentMesh.rotation.y += deltaX * 0.01;
+                currentMesh.rotation.x += deltaY * 0.01;
+                prevMouseX = e.clientX;
+                prevMouseY = e.clientY;
+            });
+
+            // Touch support for mobile rotation
+            container.addEventListener('touchstart', (e) => {
+                if(e.touches.length === 1) {
+                    isDragging = true;
+                    prevMouseX = e.touches[0].clientX;
+                    prevMouseY = e.touches[0].clientY;
+                }
+            });
+            window.addEventListener('touchend', () => { isDragging = false; });
+            container.addEventListener('touchmove', (e) => {
+                if(!isDragging || !currentMesh || e.touches.length !== 1) return;
+                const deltaX = e.touches[0].clientX - prevMouseX;
+                const deltaY = e.touches[0].clientY - prevMouseY;
+                currentMesh.rotation.y += deltaX * 0.01;
+                currentMesh.rotation.x += deltaY * 0.01;
+                prevMouseX = e.touches[0].clientX;
+                prevMouseY = e.touches[0].clientY;
+            });
+
+            animateThree();
+        }
+
+        function animateThree() {
+            animationId = requestAnimationFrame(animateThree);
+            if(currentMesh && isRotating) {
+                currentMesh.rotation.y += 0.005;
+                currentMesh.rotation.x += 0.003;
+            }
+            if(renderer && scene && camera) {
+                renderer.render(scene, camera);
+            }
+        }
+
+        function load3DRoom(room) {
+            initThreeJS(room);
+        }
+
+        function rotateModelSpeed() {
+            isRotating = !isRotating;
+        }
+
+        function toggleWireframe() {
+            if(currentMesh) {
+                isWireframe = !isWireframe;
+                currentMesh.material.wireframe = isWireframe;
+            }
+        }
+
+        function toggleFullscreen() {
+            const container = document.getElementById('canvas-container');
+            if (!document.fullscreenElement) {
+                container.requestFullscreen().catch(err => {
+                    console.error("Error attempting to enable fullscreen:", err);
+                });
+            } else {
+                document.exitFullscreen();
+            }
+        }
+
+        function toggleAudioCall() {
+            isAudioOn = !isAudioOn;
+            const btn = document.getElementById('btn-audio');
+            const icon = btn.querySelector('i');
+            const userMic = document.getElementById('user-mic-icon');
+            if(isAudioOn) {
+                btn.className = "p-3 rounded-xl bg-slate-800 hover:bg-slate-700 text-white flex items-center justify-center transition-all";
+                icon.className = "fa-solid fa-microphone text-sm text-green-400";
+                userMic.className = "fa-solid fa-microphone text-green-400 text-[8px]";
+            } else {
+                btn.className = "p-3 rounded-xl bg-red-600/20 hover:bg-red-600/40 text-red-400 flex items-center justify-center transition-all";
+                icon.className = "fa-solid fa-microphone-slash text-sm text-red-400";
+                userMic.className = "fa-solid fa-microphone-slash text-red-400 text-[8px]";
+            }
+        }
+
+        function toggleVideoCall() {
+            isVideoOn = !isVideoOn;
+            const btn = document.getElementById('btn-video');
+            const icon = btn.querySelector('i');
+            const videoFeed = document.getElementById('user-video-feed');
+            const placeholder = document.getElementById('user-video-placeholder');
+
+            if(isVideoOn) {
+                btn.className = "p-3 rounded-xl bg-indigo-600 text-white flex items-center justify-center transition-all";
+                icon.className = "fa-solid fa-video text-sm text-white";
+                placeholder.classList.add('hidden');
+                videoFeed.classList.remove('hidden');
+                
+                // Request user webcam stream simulation
+                navigator.mediaDevices.getUserMedia({ video: true, audio: false })
+                    .then(stream => {
+                        videoFeed.srcObject = stream;
+                    })
+                    .catch(err => {
+                        console.log("Webcam access simulation fallback active.");
+                    });
+            } else {
+                btn.className = "p-3 rounded-xl bg-slate-800 hover:bg-slate-700 text-white flex items-center justify-center transition-all";
+                icon.className = "fa-solid fa-video text-sm text-red-400";
+                placeholder.classList.remove('hidden');
+                videoFeed.classList.add('hidden');
+                if(videoFeed.srcObject) {
+                    videoFeed.srcObject.getTracks().forEach(track => track.stop());
+                }
+            }
+        }
+
+        function toggleScreenShare() {
+            isScreenSharing = !isScreenSharing;
+            const btn = document.getElementById('btn-screen');
+            if(isScreenSharing) {
+                btn.className = "p-3 rounded-xl bg-green-600 text-white flex items-center justify-center transition-all";
+                alert("Screen share mode active. Broadcasting your screen to teacher and classmates in 3D classroom.");
+            } else {
+                btn.className = "p-3 rounded-xl bg-slate-800 hover:bg-slate-700 text-white flex items-center justify-center transition-all";
+                alert("Screen sharing ended.");
+            }
+        }
+
+        function openRaiseHandModal() {
+            confetti({ particleCount: 80, spread: 60, origin: { y: 0.8 } });
+            alert("✋ Hand raised! Professor Vance and classmates have been notified. You have been placed in the speaker queue.");
+        }
+
+        async function sendAiMessage() {
+            const inputEl = document.getElementById('ai-chat-input');
+            const msgContainer = document.getElementById('ai-chat-messages');
+            const prompt = inputEl.value.trim();
+            if(!prompt) return;
+
+            // Append user message
+            msgContainer.innerHTML += `
+                <div class="flex items-start justify-end space-x-3">
+                    <div class="glass-card p-4 rounded-2xl max-w-xl text-sm text-white bg-indigo-600/20 border-indigo-500/30">
+                        ${escapeHtml(prompt)}
+                    </div>
+                    <div class="w-8 h-8 rounded-full bg-slate-700 flex items-center justify-center text-white text-xs font-bold shrink-0">You</div>
+                </div>
+            `;
+            inputEl.value = '';
+            msgContainer.scrollTop = msgContainer.scrollHeight;
+
+            // Loading AI bubble
+            const loadingId = 'ai-loading-' + Date.now();
+            msgContainer.innerHTML += `
+                <div id="${loadingId}" class="flex items-start space-x-3">
+                    <div class="w-8 h-8 rounded-full bg-indigo-600 flex items-center justify-center text-white text-xs font-bold shrink-0">AI</div>
+                    <div class="glass-card p-4 rounded-2xl text-sm text-slate-300 flex items-center space-x-2">
+                        <i class="fa-solid fa-spinner animate-spin text-indigo-400"></i>
+                        <span>Quantum AI is calculating response...</span>
+                    </div>
+                </div>
+            `;
+            msgContainer.scrollTop = msgContainer.scrollHeight;
+
+            try {
+                const systemPrompt = "You are OmniVerse Academy's Quantum AI Tutor, an expert, enthusiastic educator for students ages 1-15 covering Math, Science, Literature, ABC, Spelling, History, and Social Studies. Provide clear, engaging, structured answers.";
+                const apiKey = ""; // Canvas runtime provides API key
+                const apiUrl = `https://generativelanguage.googleapis.com/v1beta/models/gemini-3-flash-preview:generateContent?key=${apiKey}`;
+
+                const payload = {
+                    contents: [{ parts: [{ text: prompt }] }],
+                    systemInstruction: { parts: [{ text: systemPrompt }] }
+                };
+
+                let response = null;
+                for(let attempt = 0; attempt < 3; attempt++) {
+                    try {
+                        const res = await fetch(apiUrl, {
+                            method: 'POST',
+                            headers: { 'Content-Type': 'application/json' },
+                            body: JSON.stringify(payload)
+                        });
+                        if(res.ok) {
+                            response = await res.json();
+                            break;
+                        }
+                    } catch(e) {
+                        await new Promise(r => setTimeout(r, 1000 * Math.pow(2, attempt)));
+                    }
+                }
+
+                document.getElementById(loadingId).remove();
+
+                let aiReply = "That is a fascinating question! In OmniVerse Academy, we explore this by combining interactive 3D simulations with fundamental reasoning. Keep exploring!";
+                if(response && response.candidates && response.candidates[0]?.content?.parts[0]?.text) {
+                    aiReply = response.candidates[0].content.parts[0].text;
+                }
+
+                msgContainer.innerHTML += `
+                    <div class="flex items-start space-x-3">
+                        <div class="w-8 h-8 rounded-full bg-indigo-600 flex items-center justify-center text-white text-xs font-bold shrink-0">AI</div>
+                        <div class="glass-card p-4 rounded-2xl max-w-xl text-sm text-slate-200">
+                            ${escapeHtml(aiReply)}
+                        </div>
+                    </div>
+                `;
+                msgContainer.scrollTop = msgContainer.scrollHeight;
+
+                // Reward XP
+                userXP += 25;
+                document.getElementById('user-xp').innerText = userXP.toLocaleString();
+            } catch (err) {
+                if(document.getElementById(loadingId)) document.getElementById(loadingId).remove();
+                msgContainer.innerHTML += `
+                    <div class="flex items-start space-x-3">
+                        <div class="w-8 h-8 rounded-full bg-indigo-600 flex items-center justify-center text-white text-xs font-bold shrink-0">AI</div>
+                        <div class="glass-card p-4 rounded-2xl max-w-xl text-sm text-slate-200">
+                            Great question! Let's examine this concept in our 3D Quantum Lab or Biosphere room for a deeper hands-on understanding.
+                        </div>
+                    </div>
+                `;
+            }
+        }
+
+        function sendAiVoicePrompt() {
+            alert("🎤 Voice speech recognition active. Speak your question to the Quantum AI Tutor.");
+            document.getElementById('ai-chat-input').value = "Can you explain how black holes work in simple terms?";
+            sendAiMessage();
+        }
+
+        function handleTeacherPublish(event) {
+            event.preventDefault();
+            const title = document.getElementById('t-title').value;
+            const subject = document.getElementById('t-subject').value;
+            const age = document.getElementById('t-age').value;
+
+            courses.unshift({
+                id: courses.length + 1,
+                title: title,
+                subject: subject,
+                age: age,
+                icon: 'fa-book',
+                color: 'from-indigo-500 to-purple-600',
+                desc: 'Newly published live interactive lesson by faculty.',
+                progress: 0
+            });
+
+            liveClasses.unshift({
+                id: liveClasses.length + 1,
+                title: title,
+                teacher: 'You (Instructor)',
+                time: 'Starting Now in 3D Studio',
+                age: age,
+                subject: subject,
+                attendees: 12,
+                status: 'Live Now'
+            });
+
+            confetti({ particleCount: 150, spread: 80, origin: { y: 0.6 } });
+            alert(`🎉 Course & Live Class successfully published! Students across ages ${age} can now join your 3D session.`);
+            
+            document.getElementById('teacher-form').reset();
+            switchTab('dashboard');
+            renderCourses('all');
+            renderLiveClasses();
+        }
+
+        function openQuiz(courseId) {
+            const modal = document.getElementById('quiz-modal');
+            const content = document.getElementById('quiz-content');
+            modal.classList.remove('hidden');
+
+            content.innerHTML = `
+                <div class="text-center space-y-2">
+                    <div class="w-12 h-12 rounded-2xl bg-indigo-600/20 text-indigo-400 flex items-center justify-center mx-auto text-xl"><i class="fa-solid fa-clipboard-question"></i></div>
+                    <h3 class="text-xl font-bold text-white">Course Knowledge Check</h3>
+                    <p class="text-xs text-slate-400">Answer correctly to earn +100 XP and unlock achievement badge!</p>
+                </div>
+                <div class="space-y-3 pt-2">
+                    <p class="text-sm font-semibold text-slate-200">1. What is the fundamental building block of matter explored in our 3D Quantum Lab?</p>
+                    <div class="space-y-2">
+                        <button onclick="submitQuizAnswer(true)" class="w-full text-left px-4 py-3 rounded-xl bg-slate-900 border border-white/10 hover:border-indigo-500 text-sm text-slate-300 transition-all">A) Atoms and Quarks</button>
+                        <button onclick="submitQuizAnswer(false)" class="w-full text-left px-4 py-3 rounded-xl bg-slate-900 border border-white/10 hover:border-indigo-500 text-sm text-slate-300 transition-all">B) Wooden Blocks</button>
+                        <button onclick="submitQuizAnswer(false)" class="w-full text-left px-4 py-3 rounded-xl bg-slate-900 border border-white/10 hover:border-indigo-500 text-sm text-slate-300 transition-all">C) Digital Pixels</button>
+                    </div>
+                </div>
+            `;
+        }
+
+        function submitQuizAnswer(isCorrect) {
+            const content = document.getElementById('quiz-content');
+            if(isCorrect) {
+                confetti({ particleCount: 100, spread: 70, origin: { y: 0.6 } });
+                userXP += 100;
+                document.getElementById('user-xp').innerText = userXP.toLocaleString();
+                content.innerHTML = `
+                    <div class="text-center space-y-4 py-6">
+                        <div class="w-16 h-16 rounded-full bg-green-500/20 text-green-400 flex items-center justify-center mx-auto text-3xl"><i class="fa-solid fa-check"></i></div>
+                        <h3 class="text-2xl font-bold text-white">Correct! Outstanding Job!</h3>
+                        <p class="text-sm text-slate-300">You earned +100 XP and leveled up your mastery.</p>
+                        <button onclick="closeQuizModal()" class="px-6 py-3 rounded-xl bg-indigo-600 text-white font-semibold text-sm">Continue Learning</button>
+                    </div>
+                `;
+            } else {
+                content.innerHTML = `
+                    <div class="text-center space-y-4 py-6">
+                        <div class="w-16 h-16 rounded-full bg-red-500/20 text-red-400 flex items-center justify-center mx-auto text-3xl"><i class="fa-solid fa-xmark"></i></div>
+                        <h3 class="text-2xl font-bold text-white">Not quite right!</h3>
+                        <p class="text-sm text-slate-300">Review the 3D lab materials or ask your Quantum AI Tutor for assistance.</p>
+                        <button onclick="closeQuizModal()" class="px-6 py-3 rounded-xl bg-slate-800 text-white font-semibold text-sm">Close</button>
+                    </div>
+                `;
+            }
+        }
+
+        function closeQuizModal() {
+            document.getElementById('quiz-modal').classList.add('hidden');
+        }
+
+        function escapeHtml(text) {
+            const map = { '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#039;' };
+            return text.replace(/[&<>"']/g, function(m) { return map[m]; });
+        }
+    </script>
+</body>
+</html>
